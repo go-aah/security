@@ -12,6 +12,10 @@ import (
 	"aahframework.org/security.v0/session"
 )
 
+//‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+// Subject and its methods
+//___________________________________
+
 // Subject instance represents state and security operations for a single
 // application user. These operations include authentication info (principal),
 // authorization (access control), and session access. It is aah framework's
@@ -26,21 +30,23 @@ import (
 // Permission methods
 //
 // Subject instance provides a convenience wrapper method for all authentication
-// (primary principal, is-authenticated, logout) and authorization (has-role,
-// has-any-role, has-all-roles, is-permitted) purpose.
+// (primary principal, is-authenticated, logout) and authorization (hasrole,
+// hasanyrole, hasallroles, ispermitted, ispermittedall) purpose.
 type Subject struct {
 	AuthenticationInfo *authc.AuthenticationInfo
 	AuthorizationInfo  *authz.AuthorizationInfo
 	Session            *session.Session
 }
 
-//‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Subject AuthenticationInfo methods
-//___________________________________
-
 // PrimaryPrincipal method is convenience wrapper. See `AuthenticationInfo.PrimaryPrincipal`.
 func (s *Subject) PrimaryPrincipal() *authc.Principal {
 	return s.AuthenticationInfo.PrimaryPrincipal()
+}
+
+// Principal method returns the principal value for given Claim.
+// See `AuthenticationInfo.Principal`.
+func (s *Subject) Principal(claim string) *authc.Principal {
+	return s.AuthenticationInfo.Principal(claim)
 }
 
 // AllPrincipals method is convenience wrapper.
@@ -64,7 +70,7 @@ func (s *Subject) Logout() {
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Subject AuthorizationInfo methods
+// Subject's Authorization methods
 //___________________________________
 
 // HasRole method is convenience wrapper. See `AuthorizationInfo.HasRole`.
@@ -100,6 +106,6 @@ func (s *Subject) Reset() {
 }
 
 // String method is stringer interface implementation.
-func (s *Subject) String() string {
+func (s Subject) String() string {
 	return fmt.Sprintf("%s, %s, %s", s.AuthenticationInfo, s.AuthorizationInfo, s.Session)
 }

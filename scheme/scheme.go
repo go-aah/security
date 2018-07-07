@@ -16,34 +16,34 @@ import (
 	"aahframework.org/security.v0/authz"
 )
 
-type (
-	// Schemer interface is implemented by aah framework's authentication scheme.
-	Schemer interface {
-		// Init method gets called by framework during an application start.
-		Init(appCfg *config.Config, keyName string) error
+// Schemer interface is used to create new Auth Scheme for aah framework.
+type Schemer interface {
+	// Init method gets called by aah during an application start.
+	//
+	// `keyName` is value of security auth scheme key.
+	// 		For e.g.:
+	// 			security.auth_schemes.<keyname>
+	Init(appCfg *config.Config, keyName string) error
 
-		// Scheme method returns the auth scheme name. For e.g.: form, basic, generic, etc.
-		Scheme() string
+	// Key method returns auth scheme configuration KeyName.
+	// For e.g: `security.auth_schemes.<keyname>`.
+	Key() string
 
-		// SetAuthenticator method is used to set user provided Authentication implementation.
-		SetAuthenticator(authenticator authc.Authenticator) error
+	// Scheme method returns auth scheme name. For e.g.: form, basic, oauth2, generic, etc.
+	Scheme() string
 
-		// SetAuthorizer method is used to set user provided Authorization implementation.
-		SetAuthorizer(authorizer authz.Authorizer) error
+	// DoAuthenticate method called by aah SecurityManager to get Subject authentication
+	// information.
+	DoAuthenticate(authcToken *authc.AuthenticationToken) (*authc.AuthenticationInfo, error)
 
-		// DoAuthenticate method called by SecurityManager to get Subject authentication
-		// information.
-		DoAuthenticate(authcToken *authc.AuthenticationToken) (*authc.AuthenticationInfo, error)
+	// DoAuthorizationInfo method called by aah SecurityManager to get
+	// Subject's authorization information if successful authentication.
+	DoAuthorizationInfo(authcInfo *authc.AuthenticationInfo) *authz.AuthorizationInfo
 
-		// DoAuthorizationInfo method called by SecurityManager to get Subject authorization
-		// information.
-		DoAuthorizationInfo(authcInfo *authc.AuthenticationInfo) *authz.AuthorizationInfo
-
-		// ExtractAuthenticationToken method called by SecurityManager to extract identity details
-		// from the HTTP request.
-		ExtractAuthenticationToken(r *ahttp.Request) *authc.AuthenticationToken
-	}
-)
+	// ExtractAuthenticationToken method called by aah SecurityManager to
+	// extract identity details from the HTTP request.
+	ExtractAuthenticationToken(r *ahttp.Request) *authc.AuthenticationToken
+}
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 // Package methods
@@ -56,6 +56,8 @@ func New(authSchemeType string) Schemer {
 		return &FormAuth{}
 	case "basic":
 		return &BasicAuth{}
+	case "oauth2":
+		return &OAuth2{}
 	case "generic":
 		return &GenericAuth{}
 	}

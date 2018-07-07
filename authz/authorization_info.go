@@ -6,6 +6,24 @@ package authz
 
 import "strings"
 
+//‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+// Package methods
+//___________________________________
+
+// NewAuthorizationInfo method creates an `AuthorizationInfo`
+// instance with zero values. Use the returned instance to add roles and
+// permissions for the Subject (aka User).
+func NewAuthorizationInfo() *AuthorizationInfo {
+	return &AuthorizationInfo{
+		roles:       make(parts, 0),
+		permissions: make([]*Permission, 0),
+	}
+}
+
+//‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+// AuthorizationInfo
+//___________________________________
+
 // AuthorizationInfo struct holds the information of Subject authorization.
 // It performs authorization (access control) operations for any given Subject
 // (aka 'application user').
@@ -20,10 +38,6 @@ type AuthorizationInfo struct {
 	roles       parts
 	permissions []*Permission
 }
-
-//‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// AuthorizationInfo methods
-//___________________________________
 
 // AddRole method assigns a multiple-role to those associated with the account.
 func (a *AuthorizationInfo) AddRole(roles ...string) *AuthorizationInfo {
@@ -48,8 +62,8 @@ func (a *AuthorizationInfo) AddPermissionString(permissions ...string) *Authoriz
 	return a
 }
 
-// HasRole method returns true if the corresponding Subject/user has the
-// specified role, false otherwise.
+// HasRole method returns true if the Subject has the
+// specified role, otherwise false.
 func (a *AuthorizationInfo) HasRole(role string) bool {
 	for _, r := range a.roles {
 		if r == role {
@@ -59,19 +73,19 @@ func (a *AuthorizationInfo) HasRole(role string) bool {
 	return false
 }
 
-// HasAllRoles method returns true if the corresponding Subject/user has all of
-// the specified roles, false otherwise.
-func (a *AuthorizationInfo) HasAllRoles(roles ...string) bool {
-	return a.roles.ContainsAll(roles)
-}
-
-// HasAnyRole method returns true if the corresponding Subject/user has any-one
-// of the specified roles, false otherwise.
+// HasAnyRole method returns true if the Subject has any-one
+// of the specified roles, otherwise false.
 func (a *AuthorizationInfo) HasAnyRole(roles ...string) bool {
 	return a.roles.ContainsAny(roles)
 }
 
-// IsPermitted method returns true if the corresponding subject/user is permitted
+// HasAllRoles method returns true if the  Subject has all of
+// the specified roles, otherwise false.
+func (a *AuthorizationInfo) HasAllRoles(roles ...string) bool {
+	return a.roles.ContainsAll(roles)
+}
+
+// IsPermitted method returns true if the Subject is permitted
 // to perform an action or access a resource summarized by the specified
 // permission string.
 func (a *AuthorizationInfo) IsPermitted(permission string) bool {
@@ -79,8 +93,8 @@ func (a *AuthorizationInfo) IsPermitted(permission string) bool {
 	return a.IsPermittedp(p)
 }
 
-// IsPermittedAll method returns true if the corresponding Subject/user implies
-// all of the specified permission strings, false otherwise.
+// IsPermittedAll method returns true if the Subject implies
+// all of the specified permission strings, otherwise false.
 func (a *AuthorizationInfo) IsPermittedAll(permissions ...string) bool {
 	for _, permission := range permissions {
 		p, _ := NewPermission(permission)
@@ -91,7 +105,7 @@ func (a *AuthorizationInfo) IsPermittedAll(permissions ...string) bool {
 	return true
 }
 
-// IsPermittedp method returns true if the corresponding subject/user is permitted
+// IsPermittedp method returns true if the Subject is permitted
 // to perform an action or access a resource summarized by the specified
 // permission string.
 func (a *AuthorizationInfo) IsPermittedp(permission *Permission) bool {
@@ -107,7 +121,7 @@ func (a *AuthorizationInfo) IsPermittedp(permission *Permission) bool {
 	return false
 }
 
-// IsPermittedAllp method returns true if the corresponding Subject/user implies
+// IsPermittedAllp method returns true if the Subject implies
 // all of the specified permission strings, false otherwise.
 func (a *AuthorizationInfo) IsPermittedAllp(permissions ...*Permission) bool {
 	for _, permission := range permissions {
@@ -118,30 +132,21 @@ func (a *AuthorizationInfo) IsPermittedAllp(permissions ...*Permission) bool {
 	return true
 }
 
-// Reset method resets the instance values for repurpose.
-func (a *AuthorizationInfo) Reset() {
-	a.roles = make(parts, 0)
-	a.permissions = make([]*Permission, 0)
+// Roles method returns roles in the string format.
+func (a *AuthorizationInfo) Roles() string {
+	return strings.Join(a.roles, ", ")
+}
+
+// Permissions method returns permissions in the string format.
+func (a *AuthorizationInfo) Permissions() string {
+	var ps []string
+	for _, p := range a.permissions {
+		ps = append(ps, p.String())
+	}
+	return strings.Join(ps, "|")
 }
 
 // String method is stringer interface implementation.
-func (a *AuthorizationInfo) String() string {
-	var str string
-	if len(a.roles) > 0 {
-		str += "Roles[" + strings.Join(a.roles, "|") + "]"
-	} else {
-		str += "Roles[]"
-	}
-
-	if len(a.permissions) > 0 {
-		var ps []string
-		for _, p := range a.permissions {
-			ps = append(ps, p.String())
-		}
-		str += " Permissions[" + strings.Join(ps, "|") + "]"
-	} else {
-		str += " Permissions[]"
-	}
-
-	return str
+func (a AuthorizationInfo) String() string {
+	return "authorizationinfo(roles(" + a.Roles() + ") allpermissions(" + a.Permissions() + "))"
 }

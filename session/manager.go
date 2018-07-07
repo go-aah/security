@@ -39,34 +39,21 @@ import (
 
 var (
 	// ErrSessionStoreIsNil returned when suppiled store is nil.
-	ErrSessionStoreIsNil = errors.New("session: store value is nil")
+	ErrSessionStoreIsNil = errors.New("security/session: store value is nil")
 
 	registerStores = make(map[string]Storer)
 	sessionPool    = sync.Pool{New: func() interface{} { return &Session{Values: make(map[string]interface{})} }}
 )
 
-type (
-	// Storer is interface for implementing pluggable storage implementation.
-	Storer interface {
-		Init(appCfg *config.Config) error
-		Read(id string) string
-		Save(id, value string) error
-		Delete(id string) error
-		IsExists(id string) bool
-		Cleanup(m *Manager)
-	}
-
-	// Manager is a session manager to manage sessions.
-	Manager struct {
-		cfg             *config.Config
-		mode            string
-		store           Storer
-		storeName       string
-		cookieMgr       *cookie.Manager
-		idLength        int
-		cleanupInterval int64
-	}
-)
+// Storer is interface for implementing pluggable storage implementation.
+type Storer interface {
+	Init(appCfg *config.Config) error
+	Read(id string) string
+	Save(id, value string) error
+	Delete(id string) error
+	IsExists(id string) bool
+	Cleanup(m *Manager)
+}
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 // Package methods
@@ -142,12 +129,27 @@ func NewManager(appCfg *config.Config) (*Manager, error) {
 	// Schedule cleanup
 	if !m.IsCookieStore() {
 		time.AfterFunc(time.Duration(m.cleanupInterval)*time.Second, func() {
-			log.Info("Running expired session cleanup at %v", time.Now())
+			log.Infof("Running expired session cleanup at %v", time.Now())
 			m.store.Cleanup(m)
 		})
 	}
 
 	return m, nil
+}
+
+//‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+// Session Manager
+//___________________________________
+
+// Manager is a session manager to manage sessions.
+type Manager struct {
+	cfg             *config.Config
+	mode            string
+	store           Storer
+	storeName       string
+	cookieMgr       *cookie.Manager
+	idLength        int
+	cleanupInterval int64
 }
 
 // NewSession method creates a new session for the request.
@@ -165,7 +167,6 @@ func (m *Manager) NewSession() *Session {
 func (m *Manager) GetSession(r *http.Request) *Session {
 	scookie, err := r.Cookie(m.cookieMgr.Options.Name)
 	if err == http.ErrNoCookie {
-		log.Trace("aah application session cookie is not yet created or unavailable")
 		return nil
 	}
 
@@ -234,7 +235,6 @@ func (m *Manager) SaveSession(w http.ResponseWriter, s *Session) error {
 		}
 	}
 
-	log.Debugf("Session saved, ID: %s", s.ID)
 	m.cookieMgr.Write(w, encodedStr)
 	return nil
 }
@@ -244,14 +244,13 @@ func (m *Manager) SaveSession(w http.ResponseWriter, s *Session) error {
 func (m *Manager) DeleteSession(w http.ResponseWriter, s *Session) error {
 	if !m.IsCookieStore() {
 		if err := m.store.Delete(s.ID); err != nil {
-			// store delete had error, log it and go forward to clean the cookie
+			// store delete had an error, log it and go forward to clean the cookie
 			log.Error(err)
 		}
 	}
 
 	opts := *m.cookieMgr.Options
 	opts.MaxAge = -1
-	log.Debugf("Session deleted, ID: %s", s.ID)
 	http.SetCookie(w, cookie.NewWithOptions("", &opts))
 	return nil
 }

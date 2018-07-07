@@ -1,11 +1,12 @@
 // Copyright (c) Jeevanandam M. (https://github.com/jeevatkm)
-// go-aah/security source code and usage is governed by a MIT style
+// aahframework.org/security source code and usage is governed by a MIT style
 // license that can be found in the LICENSE file.
 
 package anticsrf
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -73,8 +74,6 @@ func TestAntiCSRFSecret(t *testing.T) {
 	_ = req.ParseForm()
 
 	areq := ahttp.AcquireRequest(req)
-	areq.Params.Form = req.Form
-
 	secret := antiCSRF.CipherSecret(areq)
 	requestSecret := antiCSRF.RequestCipherSecret(areq)
 	assert.True(t, bytes.Equal(secret, requestSecret))
@@ -122,4 +121,10 @@ func TestAntiCSRFCipherSecret(t *testing.T) {
 	areq.Unwrap().Header.Set("Cookie", "aah_anti_csrf=This is cookie value")
 	secret = antiCSRF.CipherSecret(areq)
 	assert.NotNil(t, secret)
+}
+
+func TestAntiCSRFTimeUnit(t *testing.T) {
+	v, err := toSeconds("10s")
+	assert.Equal(t, int64(0), v)
+	assert.Equal(t, errors.New("unsupported time unit '10s' on 'security.anti_csrf.ttl'"), err)
 }

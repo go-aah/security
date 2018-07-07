@@ -17,13 +17,14 @@ const hashDelim = "$"
 
 var (
 	// ErrPasswordEncoderIsNil returned when given password encoder instance is nil.
-	ErrPasswordEncoderIsNil = errors.New("acrypto: password encoder is nil")
+	ErrPasswordEncoderIsNil = errors.New("security/crypto: password encoder is nil")
 
 	passEncoders = make(map[string]PasswordEncoder)
 )
 
-// PasswordEncoder interface is used to implement generate password hash and compare given hash & password
-// based chosen hashing type. Such as `bcrypt`, `scrypt` and `pbkdf2`.
+// PasswordEncoder interface is used to implement generate password hash and
+// compare given hash & password based chosen hashing type. Such as `bcrypt`,
+// `scrypt` and `pbkdf2`.
 //
 // Good read about hashing security https://crackstation.net/hashing-security.htm
 type PasswordEncoder interface {
@@ -99,15 +100,4 @@ func InitPasswordEncoders(cfg *config.Config) error {
 	}
 
 	return nil
-}
-
-// CreatePasswordEncoder method creates the instance of password encoder password,
-// based on given type. Currently `bcrypt` is supported.
-//
-// DEPRECATED: Use method `PasswordAlgorithm` instead.
-func CreatePasswordEncoder(etype string) (PasswordEncoder, error) {
-	if pass := PasswordAlgorithm(etype); pass != nil {
-		return pass, nil
-	}
-	return nil, errors.New("security/acrypto: password encoder not found")
 }

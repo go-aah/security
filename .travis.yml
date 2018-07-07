@@ -11,10 +11,13 @@ branches:
 
 go:
   - 1.9
-  - "1.10"
+  - 1.x
   - tip
 
 go_import_path: aahframework.org/security.v0
+
+before_install:
+  - bash <(curl -s https://aahframework.org/base-before-install) "ahttp forge config essentials"
 
 install:
   - go get -t -v ./...

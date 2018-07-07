@@ -19,40 +19,14 @@ import (
 	"aahframework.org/security.v0/acrypto"
 )
 
-// All possible cookie errors
+// Cookie errors
 var (
-	ErrCookieValueIsTooLarge    = errors.New("security/cookie: cookie value is greater than 4096")
-	ErrCookieValueIsInvalid     = errors.New("security/cookie: cookie value is not valid")
-	ErrCookieInvaildTimestamp   = errors.New("security/cookie: cookie timestamp is invalid")
-	ErrCookieTimestampIsTooNew  = errors.New("security/cookie: cookie timestamp is too new")
-	ErrCookieTimestampIsExpired = errors.New("security/cookie: cookie timestamp expried")
+	ErrCookieValueIsTooLarge    = errors.New("security/cookie: value is greater than 4096")
+	ErrCookieValueIsInvalid     = errors.New("security/cookie: value is not valid")
+	ErrCookieInvaildTimestamp   = errors.New("security/cookie: timestamp is invalid")
+	ErrCookieTimestampIsTooNew  = errors.New("security/cookie: timestamp is too new")
+	ErrCookieTimestampIsExpired = errors.New("security/cookie: timestamp expried")
 	ErrSignVerificationIsFailed = errors.New("security/cookie: sign verification is failed")
-)
-
-type (
-	// Manager struct used to manage and process secure cookie.
-	Manager struct {
-		Options *Options
-
-		isSignKey     bool
-		signKey       []byte
-		sha           string
-		isEncKey      bool
-		encKey        []byte
-		cipherBlock   cipher.Block
-		maxCookieSize int
-	}
-
-	// Options to hold session cookie options.
-	Options struct {
-		Name     string
-		Domain   string
-		Path     string
-		MaxAge   int64
-		HTTPOnly bool
-		Secure   bool
-		SameSite string
-	}
 )
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -108,8 +82,32 @@ func NewWithOptions(value string, opts *Options) *http.Cookie {
 }
 
 //‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-// Manager methods
+// Cookie Manager
 //___________________________________
+
+// Manager struct used to manage and process secure cookie.
+type Manager struct {
+	Options *Options
+
+	isSignKey     bool
+	signKey       []byte
+	sha           string
+	isEncKey      bool
+	encKey        []byte
+	cipherBlock   cipher.Block
+	maxCookieSize int
+}
+
+// Options to hold session cookie options.
+type Options struct {
+	Name     string
+	Domain   string
+	Path     string
+	MaxAge   int64
+	HTTPOnly bool
+	Secure   bool
+	SameSite string
+}
 
 // New method creates new cookie instance for given value with cookie manager options.
 func (m *Manager) New(value string) *http.Cookie {
